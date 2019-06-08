@@ -1,7 +1,18 @@
 #include"UI.h"
 #include"AI.h"
 int winner = PNULL;
-extern unsigned char chessMap[BOARD_SIZE][BOARD_SIZE];
+
+
+
+
+char mes[100];
+char test[15];
+int score;
+
+
+
+
+unsigned char chessMap[BOARD_SIZE][BOARD_SIZE];
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); //声名消息处理函数(处理windows和接收windows消息)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 {
@@ -27,7 +38,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 	};
 	//创建一个窗体。已分配内存。返回一个窗体句柄
 	hwnd = CreateWindow(szAppName,      // window class name
-		TEXT("幻想乡（迫真）"),   // window caption
+		TEXT("五子棋"),   // window caption
 		WS_OVERLAPPEDWINDOW, // window style
 		CW_USEDEFAULT,// initial x position
 		CW_USEDEFAULT,// initial y position
@@ -62,6 +73,26 @@ HRESULT DrawChess(HDC hdc,POINT zero, POINT down,int cxclient,int cyclient,int c
 	rx = perx *0.4;
 	ry = pery *0.4;
 	Ellipse(hdc, zero.x + down.x*perx - rx, zero.y + down.y*pery - ry, zero.x + down.x*perx + rx, zero.y + down.y*pery + ry);
+	SelectObject(hdc, GetStockObject(WHITE_BRUSH));
+	return S_OK;
+}
+HRESULT DrawHeavyPoint(HDC hdc, POINT zero, int cxClient, int cyClient)
+{
+	int perx, pery, rx, ry;
+	SelectObject(hdc, GetStockObject(BLACK_BRUSH));
+	GetXY(zero, cxClient, cyClient, &perx, &pery);
+	POINT heavy[5];
+	heavy[0].y = heavy[1].y = BOARD_SIZE / 4;
+	heavy[2].x = heavy[2].y = BOARD_SIZE / 2;
+	heavy[0].x = heavy[3].x = BOARD_SIZE / 4;
+	heavy[1].x = heavy[4].x = BOARD_SIZE * 3 / 4;
+	heavy[3].y = heavy[4].y = BOARD_SIZE * 3 / 4;
+	rx = perx * 0.1;
+	ry = pery * 0.1;
+	for (int i = 0; i < 5; i++)
+	{
+		Ellipse(hdc, zero.x + heavy[i].x*perx - rx, zero.y + heavy[i].y*pery - ry, zero.x + heavy[i].x*perx + rx, zero.y + heavy[i].y*pery + ry);
+	}
 	SelectObject(hdc, GetStockObject(WHITE_BRUSH));
 	return S_OK;
 }
@@ -194,7 +225,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)/
 			MessageBox(hwnd, TEXT("人获胜！"), TEXT("提示"), MB_OK);
 			return 0;
 		}
-		computer = AIturn();
+		computer = AIturn();//与AI联系的接口
+
 		hdc = GetDC(hwnd);
 		DrawChess(hdc, zero, computer, clientx, clienty, AI);
 		ReleaseDC(hwnd, hdc);
@@ -220,6 +252,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)/
 		hdc = BeginPaint(hwnd, &ps);
 		SelectObject(hdc, GetStockObject(BLACK_BRUSH));
 		DrawChessBoard(hdc, zero, clientx, clienty);
+		DrawHeavyPoint(hdc, zero, clientx, clienty);
 		EndPaint(hwnd, &ps);
 		return 0;
 	case WM_DESTROY:
@@ -234,7 +267,7 @@ void restart()
 }
 bool judge(POINT down, char color)
 {
-	int count = 1, jtemp,m=0,n=0;
+	int count = 0, jtemp,m=0,n=0;
 	for (int i = (down.x - 4 > 0 ? down.x - 4 : 0); i <= down.x + 4&&i<BOARD_SIZE; i++)
 	{
 		if (chessMap[i][down.y] == color)
